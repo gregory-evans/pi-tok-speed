@@ -2,8 +2,8 @@
  * tok-speed — live inference speed in the Pi footer stats line.
  *
  * Uses the shared footer from ../lib/footer-shared.ts and registers a
- * tokens/sec counter that is appended at the end of the stats line (after
- * the context usage). Shows a "-- tok/s" placeholder until the first
+ * tokens/sec counter (format `S<value>ts`, integer, rounded) appended at the
+ * end of the stats line. Shows an "S--ts" placeholder until the first
  * measurement; while an assistant response streams, shows a live estimate;
  * after it finalizes, re-computes from provider-reported usage when available
  * and keeps that value until the next response starts.
@@ -71,13 +71,12 @@ export default function (pi: ExtensionAPI) {
 		registerFooterExtra(
 			"tok-speed",
 			100,
-			() =>
-				rate === null
-					? { text: "-- tok/s" }
-					: finalRate
-						? { text: `${rate.toFixed(1)} tok/s`, color: "success" }
-						: { text: `~${Math.round(rate)} tok/s`, color: "accent" },
-		);
+			() => {
+				if (rate === null) return { text: "S--ts" }; // placeholder
+				const value = Math.round(rate); // round, don't truncate
+				return finalRate ? { text: `S${value}ts`, color: "success" } : { text: `S${value}ts`, color: "accent" };
+		},
+	);
 
 		if (ctx.mode === "tui") installSharedFooter(ctx);
 	});
