@@ -1,23 +1,23 @@
 # pi-tok-speed
 
-Live inference speed (tokens/sec) in the Pi coding agent footer — on the same line as the token and context usage counters.
+Live inference speed (tokens/sec) in the Pi coding agent footer — on the same line as the token and context usage counters, at the end of that line.
 
-While an assistant response streams, the footer shows a live estimate:
+Until the first measurement is available, a dim placeholder `-- tok/s` is shown. While an assistant response streams, it becomes a live estimate:
 
 ```
 ~/project (main)
-↑12.3k ↓456 ⚡ ~32 tok/s R90.2k W1.1k CH97.8% $0.421 42.3%/200k      model-name • high
+↑12.3k ↓456 R90.2k W1.1k CH97.8% $0.421 42.3%/200k ~32 tok/s   model-name • high
 ```
 
 After the response finalizes, the value is re-computed from provider-reported `usage.output` when available and shown in green until the next response starts:
 
 ```
-↑12.3k ↓512 ⚡ 32.1 tok/s R90.2k W1.1k CH97.8% $0.421 43.0%/200k   model-name • high
+↑12.3k ↓512 R90.2k W1.1k CH97.8% $0.421 43.0%/200k 32.1 tok/s model-name • high
 ```
 
 ## How it works
 
-The extension replaces the built-in footer with a lookalike (via `ctx.ui.setFooter()`) that inserts the speed counter right after the output-token count:
+The extension replaces the built-in footer with a lookalike (via `ctx.ui.setFooter()`) and appends the speed counter at the end of the stats line, after the context usage:
 
 - **Live estimate** — derived from the growing partial assistant message (text + thinking + tool-call arguments, ÷ 4 chars/token), or from provider-reported cumulative `usage.output` when the stream provides it.
 - **Timing** — measured from the first output token to the last (excludes time-to-first-token); for very short responses (<0.5 s of generation) timing falls back to request start.

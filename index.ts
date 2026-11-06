@@ -1,9 +1,10 @@
 /**
  * tok-speed — live inference speed in the footer stats line.
  *
- * Replaces the built-in footer with a lookalike that inserts a tokens/sec
- * counter on the same line as the token and context usage counters (after
- * the output-token count). While an assistant response streams, shows a live
+ * Replaces the built-in footer with a lookalike that appends a tokens/sec
+ * counter at the end of the stats line (next to the token/context counters).
+ * Shows a "-- tok/s" placeholder until the first measurement. While an
+ * assistant response streams, shows a live
  * estimate; after it finalizes, re-computes from provider-reported usage when
  * available and keeps that value until the next response starts.
  */
@@ -150,12 +151,6 @@ export default function (pi: ExtensionAPI) {
 					if (t.input) parts.push({ text: `↑${formatTokens(t.input)}` });
 					if (t.output) parts.push({ text: `↓${formatTokens(t.output)}` });
 
-					// tok/s counter, right after the output tokens
-					if (rate !== null) {
-						const label = finalRate ? `${rate.toFixed(1)} tok/s` : `~${Math.round(rate)} tok/s`;
-						parts.push({ text: `⚡ ${label}`, color: finalRate ? "success" : "accent" });
-					}
-
 					if (t.cacheRead) parts.push({ text: `R${formatTokens(t.cacheRead)}` });
 					if (t.cacheWrite) parts.push({ text: `W${formatTokens(t.cacheWrite)}` });
 					if ((t.cacheRead > 0 || t.cacheWrite > 0) && t.latestCacheHitRate !== undefined) {
@@ -167,6 +162,14 @@ export default function (pi: ExtensionAPI) {
 					const percent = ctx.getContextUsage()?.percent;
 					const display = `${percent === null || percent === undefined ? "?" : percent.toFixed(1)}%/${formatTokens(contextWindow)}`;
 					parts.push({ text: display, color: (percent ?? 0) > 90 ? "error" : (percent ?? 0) > 70 ? "warning" : undefined });
+
+					// tok/s counter at the end of the stats line; placeholder until first measurement
+					if (rate !== null) {
+						const label = finalRate ? `${rate.toFixed(1)} tok/s` : `~${Math.round(rate)} tok/s`;
+						parts.push({ text: label, color: finalRate ? "success" : "accent" });
+					} else {
+						parts.push({ text: "-- tok/s" });
+					}
 
 					const left = parts.map((p) => (p.color ? theme.fg(p.color, p.text) : theme.fg("dim", p.text))).join(" ");
 
